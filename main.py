@@ -4,12 +4,14 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
-# モデル定義とハイパーパラメータ
+# ハイパーパラメータ
 latent_dim = 10
 n_classes = 10
 img_size = 28
 
+# Generator定義
 class Generator(nn.Module):
     def __init__(self, latent_dim, n_classes, img_size=28):
         super(Generator, self).__init__()
@@ -43,16 +45,27 @@ class Generator(nn.Module):
 # デバイス設定
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# モデルの初期化と重みロード（weights_only=False を使用）
+# モデルロード
+model_path = "GANgenerator.pth"
 generator = Generator(latent_dim, n_classes, img_size).to(device)
-generator.load_state_dict(torch.load("GANgenerator.pth", map_location=device))  # weights_only=False（学習時と同じモデル構造が必要）
+
+if not os.path.isfile(model_path):
+    st.error(f"モデルファイル '{model_path}' が見つかりません。アプリと同じディレクトリに置いてください。")
+    st.stop()
+
+try:
+    generator.load_state_dict(torch.load(model_path, map_location=device))
+except Exception as e:
+    st.error(f"モデルの読み込みに失敗しました：{e}")
+    st.stop()
+
 generator.eval()
 
 # Streamlit UI
 st.title("Conditional GAN Digit Generator")
 st.write("好きな数字（0〜9）を選んで、画像を生成してみましょう。")
 
-label = st.selectbox("ラベルを選択してください（数字0〜9）", list(range(10)))
+label = st.selectbox("ラベルを選択してください（0〜9）", list(range(10)))
 generate_button = st.button("画像を生成")
 
 if generate_button:
@@ -61,7 +74,7 @@ if generate_button:
     with torch.no_grad():
         generated_img = generator(z, label_tensor)
     img_np = generated_img.squeeze().cpu().numpy()
-    img_np = (img_np + 1) / 2.0  # [-1,1] → [0,1] にスケーリング
+    img_np = (img_np + 1) / 2.0  # [-1, 1] → [0, 1]
 
     st.write(f"ラベル: {label} に対応する生成画像")
     st.image(img_np, width=224, caption="生成画像", channels="L")
