@@ -45,7 +45,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # モデルの初期化と重みロード（weights_only=False を使用）
 generator = Generator(latent_dim, n_classes, img_size).to(device)
-generator.load_state_dict(torch.load("generator.pth", map_location=device))  # weights_only=False（学習時と同じモデル構造が必要）
+generator.load_state_dict(torch.load("GANgenerator.pth", map_location=device))  # weights_only=False（学習時と同じモデル構造が必要）
 generator.eval()
 
 # Streamlit UI
