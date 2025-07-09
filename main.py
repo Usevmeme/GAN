@@ -11,7 +11,7 @@ latent_dim = 10
 n_classes = 10
 img_size = 28
 
-# Generator定義
+# Generatorの定義
 class Generator(nn.Module):
     def __init__(self, latent_dim, n_classes, img_size=28):
         super(Generator, self).__init__()
@@ -45,21 +45,20 @@ class Generator(nn.Module):
 # デバイス設定
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# モデルロード
+# モデルファイルの読み込み（weights_only=False を明示）
 model_path = "GANgenerator.pth"
-generator = Generator(latent_dim, n_classes, img_size).to(device)
 
 if not os.path.isfile(model_path):
-    st.error(f"モデルファイル '{model_path}' が見つかりません。アプリと同じディレクトリに置いてください。")
+    st.error(f"モデルファイル '{model_path}' が見つかりません。アプリと同じディレクトリに配置してください。")
     st.stop()
 
 try:
-    generator.load_state_dict(torch.load(model_path, map_location=device))
+    generator = torch.load(model_path, map_location=device, weights_only=False)  # ← 修正ポイント
+    generator = generator.to(device)
+    generator.eval()
 except Exception as e:
-    st.error(f"モデルの読み込みに失敗しました：{e}")
+    st.error(f"モデルの読み込みに失敗しました：\n{e}")
     st.stop()
-
-generator.eval()
 
 # Streamlit UI
 st.title("Conditional GAN Digit Generator")
